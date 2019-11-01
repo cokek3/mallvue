@@ -44,6 +44,7 @@ import BackTop from "components/content/backtop/BackTop";
 
 import { getHomeMultidata, getHomeGoods } from "network/home";
 import { debounce } from "common/utils";
+import {itemListenerMixin} from 'common/mixin'
 
 export default {
   name: "Home",
@@ -70,8 +71,24 @@ export default {
       isShowBackTop: false,
       tabOffsetTop: 0,
       isTabFixed: false,
-      saveY:0
+      saveY: 0
     };
+  },
+  computed: {
+    showGoods() {
+      return this.goods[this.curtype].list;
+    }
+  },
+  mixins:[itemListenerMixin],
+
+  activated() {
+    this.$refs.scroll.scrollTo(0, this.saveY, 0);
+    this.$refs.scroll.refresh();
+  },
+  deactivated() {
+    this.saveY = this.$refs.scroll.getScrollY();
+    // 取消全局事件的监听
+    this.$bus.$off('itemImageLoad',this.itemImgListener)
   },
   created() {
     // 1.请求多个数据
@@ -81,18 +98,12 @@ export default {
     this.getHomeGoods("new");
     this.getHomeGoods("sell");
   },
-  activated(){
-    this.$refs.scroll.scrollTo(0,this.saveY,0)
-  },
-  deactivated(){
-    this.saveY = this.$refs.scroll.getScrollY()
-  },
-  mounted() {
-    const refresh = debounce(this.$refs.scroll.refresh, 50);
-    this.$bus.$on("itemImageLoad", () => {
-      refresh();
-    });
-  },
+  // mounted() {
+  //   const refresh = debounce(this.$refs.scroll.refresh, 50);
+  //   this.$bus.$on("itemImageLoad", () => {
+  //     refresh();
+  //   });
+  // },
   methods: {
     tabClick(index) {
       switch (index) {
@@ -125,8 +136,7 @@ export default {
       //  this.$refs.scroll.refresh()
     },
     swiperImageLoad() {
-      this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop ;
-      
+      this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop;
     },
 
     // 网络请求方法
@@ -144,11 +154,6 @@ export default {
 
         this.$refs.scroll.finishPullUp();
       });
-    }
-  },
-  computed: {
-    showGoods() {
-      return this.goods[this.curtype].list;
     }
   }
 };
